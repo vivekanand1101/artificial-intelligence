@@ -1,4 +1,30 @@
-class Graph:
+class State:
+    """Represents a state of the environment"""
+    
+    def __init__(self, l):
+        self.root = l
+
+    def __repr__(self):
+        for i in l.length:
+            for j in i:
+                s = s + str(j)
+            s = s + '\n'
+        return s
+
+    def __hash__(self):
+        return hash(self.root)
+
+    def __eq__(self, other):
+        return self.root == other.root
+
+    def blank_pos(self):
+        for i in l.legth:
+            for j in i:
+                if l[i][j] == -1:
+                    return (i, j)
+
+
+class Matrix:
     """Represents a graph, uses python dict
         data structure.
     """
@@ -71,7 +97,40 @@ class Graph:
                         edges.append((key, value))
         return edges
 
-    def level_order_traversal(self, root):
+class Graph:
+"""Represents the state graph"""
+
+    def __init__(self, state):
+        self.root = state
+
+    def neighbours(self, node):
+        n = []
+        for i in range(node.length):
+            for j in range(i):
+                if node[i][j] == -1:
+                    if j > 0:
+                        node[i][j], node[i][j-1] = node[i][j-1], node[i][j]
+                        obj_state = State(node)
+                        n.extend(obj_state)
+                        node[i][j], node[i][j-1] = node[i][j-1], node[i][j]
+                    if i > 0:
+                        node[i][j], node[i-1][j] = node[i-1][j], node[i][j]
+                        obj_state = State(node)
+                        n.extend(obj_state)
+                        node[i][j], node[i-1][j] = node[i-1][j], node[i][j]
+                    if j < n - 1:
+                        node[i][j], node[i][j+1] = node[i][j+1], node[i][j]
+                        obj_state = State(node)
+                        n.extend(obj_state)
+                        node[i][j], node[i][j+1] = node[i][j+1], node[i][j]
+                    if i < n - 1:
+                        node[i][j], node[i+1][j] = node[i+1][j], node[i][j]
+                        obj_state = State(node)
+                        n.extend(obj_state)
+                        node[i][j], node[i+1][j] = node[i+1][j], node[i][j]
+        return n
+
+    def level_order_traversal(self):
         """Print the graph in breadth first manner"""
 
         #the idea is we first put
@@ -81,7 +140,7 @@ class Graph:
         #it and look for its neighbours
         #and visit them one by one
         queue = []
-        queue.append(root)
+        queue.append(self.root)
 
         #to keep track that we
         #we don't loop forever
@@ -104,6 +163,7 @@ class Graph:
 
             #you visited the node earlier!
             visited.extend(node)
+
 
 def main():
     t = int(raw_input())
