@@ -1,3 +1,4 @@
+from collections import deque
 from itertools import chain
 
 class State:
@@ -15,10 +16,9 @@ class State:
         return self.n
 
     def blank_pos(self):
-        for i in range(self.n):
-            for j in range(self.n):
-                if int(self.root[i][j]) == -1:
-                    return (i, j)
+        index = self.root.index(str(-1))
+        return (index / self.n, index % self.n)
+
     def __iter__(self):
         return iter(self.root)
 
@@ -26,8 +26,7 @@ class State:
 #        return self.root
 
     def __hash__(self):
-        new = list(chain.from_iterable(self.root))
-        return hash(tuple(new))
+        return hash(tuple(self.root))
 
     def __eq__(self, other):
         return (self.__hash__(), self.n) == (other.__hash__(), other.n)
@@ -40,50 +39,42 @@ class Graph():
 
     def copy(self, node):
         copy = []
-        for i in range(node.n):
-            l = []
-            for j in range(node.n):
-                l.append(node.root[i][j])
-            copy.append(l)
+        for i in node.root:
+            copy.append(i)
         #print 'copy ', copy
         return copy
 
     def neighbours(self, node):
         n_ = []
         count = 0
-        for i in range(len(node)):
-            for j in range(len(node)):
-                if int(node.root[i][j]) == -1:
-                    count += 1
-                    if j > 0:
-                        x = self.copy(node)
-                        x[i][j], x[i][j-1] = x[i][j-1], x[i][j]
-                        obj_state1 = State(x, node.n, node)
-                        n_.append(obj_state1)
-                    if i > 0:
-                        x = self.copy(node)
-                        x[i-1][j], x[i][j] = x[i][j], x[i-1][j]
-                        obj_state2 = State(x, node.n, node)
-                        n_.append(obj_state2)
-                    if j < node.n - 1:
-                        x = self.copy(node)
-                        x[i][j], x[i][j+1] = x[i][j+1], x[i][j]
-                        obj_state3 = State(x, node.n, node)
-                       # print x == node.root
-                       # print self.root.root == node.root
-                        n_.append(obj_state3)
-                       # print n_
-                    if i < node.n - 1:
-                        x = self.copy(node)
-                        x[i][j], x[i+1][j] = x[i+1][j], x[i][j]
-                        obj_state4 = State(x, node.n, node)
-                        n_.append(obj_state4)
-                       # print n_
+        n = node.n
+        for k in range(len(node) * len(node)):
+            if int(node.root[k]) == -1:
+                i, j = k / n, k % n
+                if j > 0:
+                    x = self.copy(node)
+                    x[k], x[k-1] = x[k-1], x[k]
+                    obj_state1 = State(x, n, node)
+                    n_.append(obj_state1)
+                if i > 0:
+                    x = self.copy(node)
+                    x[k-n], x[k] = x[k], x[k-n]
+                    obj_state2 = State(x, n, node)
+                    n_.append(obj_state2)
+                if j < n - 1:
+                    x = self.copy(node)
+                    x[k], x[k+1] = x[k+1], x[k]
+                    obj_state3 = State(x, n, node)
+                    n_.append(obj_state3)
+                if i < n - 1:
+                    x = self.copy(node)
+                    x[k], x[k+n] = x[k+n], x[k]
+                    obj_state4 = State(x, n, node)
+                    n_.append(obj_state4)
         return n_
 
     def is_final(self, node):
-        new = list(chain.from_iterable(node))
-        if sorted(new[:-1]) == new[:-1]:
+        if sorted(node.root[:-1]) == node.root[:-1]:
             return True
         else:
             return False
@@ -97,7 +88,7 @@ class Graph():
         #first take the root and enqueue
         #it and look for its neighbours
         #and visit them one by one
-        queue = []
+        queue = deque([])
         queue.append(self.root)
 
         #to keep track that we
@@ -106,30 +97,26 @@ class Graph():
         while queue:
 
             #dequeue from the queue
-            node = queue.pop(0)
-            if node.blank_pos() == (int(node.n) - 1, int(node.n) - 1) and self.is_final(node):
-                #print node
+            node = queue.popleft()
+            if node.blank_pos() == (node.n - 1, node.n - 1) and self.is_final(node):
                 return node
 
             #do what you want to do with the node
             #but, first check if it is not visited
             #if node not in visited:
-            #    print node,
+             #   print node,
 
             #check for other nodes in the
             #neighbourhood
             n_ = self.neighbours(node)
             for vertex in n_:
-#                print 'neighbours ', vertex
+                #print 'neighbours ', vertex
                 if vertex not in visited:
                     queue.append(vertex)
-                    #print 'queue'
-#                    print 'q ', queue
-#            print 'ql ', len(queue)
 
             #you visited the node earlier!
             visited.add(node)
-            #print 'visited ', visited
+            print 'visited ', visited
 
 def main():
     t = int(raw_input())
@@ -142,6 +129,7 @@ def main():
         [int(j) for j in x]
         l.append(x)
 
+    l = list(chain.from_iterable(l))
     obj_state = State(l, n, None)
     g = Graph(obj_state)
     #print 'A'
@@ -153,8 +141,7 @@ def main():
 
     while stack:
         x = stack.pop()
-        l = list(chain.from_iterable(x))
-        for i in l:
+        for i in x:
             print i,
         print
 main()

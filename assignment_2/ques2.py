@@ -81,12 +81,22 @@ class Graph():
                        # print n_
         return n_
 
-    def is_final(self, node):
+    def is_final(self, node, x, y):
         new = list(chain.from_iterable(node))
-        if sorted(new[:-1]) == new[:-1]:
+        index = x * 3 + y
+        new.pop(index)
+        if sorted(new) == new:
             return True
         else:
             return False
+
+    def is_final_blank_pos(self, node):
+        (x, y) = node.blank_pos()
+        n = node.n
+        if (x, y) == (0, n-1) or (x, y) == (n-1, 0) or (x, y) == (n-1, n-1) or (x, y) == (0, 0):
+            return ((x, y), True)
+        else:
+            return (None, False)
 
     def level_order_traversal(self):
         """Print the graph in breadth first manner"""
@@ -107,9 +117,11 @@ class Graph():
 
             #dequeue from the queue
             node = queue.pop(0)
-            if node.blank_pos() == (int(node.n) - 1, int(node.n) - 1) and self.is_final(node):
-                #print node
-                return node
+            X, Y = self.is_final_blank_pos(node)
+            if Y == True:
+                (x, y) = X
+                if self.is_final(node, x, y):
+                    return node
 
             #do what you want to do with the node
             #but, first check if it is not visited
@@ -124,8 +136,7 @@ class Graph():
                 if vertex not in visited:
                     queue.append(vertex)
                     #print 'queue'
-#                    print 'q ', queue
-#            print 'ql ', len(queue)
+                    #print queue
 
             #you visited the node earlier!
             visited.add(node)
@@ -141,7 +152,7 @@ def main():
         x = x.split(' ')
         [int(j) for j in x]
         l.append(x)
-
+    
     obj_state = State(l, n, None)
     g = Graph(obj_state)
     #print 'A'
@@ -157,4 +168,5 @@ def main():
         for i in l:
             print i,
         print
+
 main()
