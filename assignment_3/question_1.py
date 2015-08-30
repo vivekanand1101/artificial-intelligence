@@ -26,21 +26,21 @@ class Agent:
         """
         (i, j) = fringe
         fringes = []
-        if j < self.environ.n - 1 and self.environ.matrix[(i * n) + (j+1)] != 1:
+        if j < self.environ.n - 1 and self.environ.sensor_is_navigable(i, j+1): 
             self.fringe.append((i, j+1))
-        if j < self.environ.n - 1 and i < self.environ.m - 1 and self.environ.matrix[((i+1) * n)+(j+1)] != 1:
+        if j < self.environ.n - 1 and i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j+1):
             self.fringe.append((i+1, j+1))
-        if i < self.environ.m - 1 and self.environ.matrix[((i+1) * n + j)]:
+        if i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j):
             self.fringe.append((i+1, j))
-        if j > 0 and i < self.environ.m - 1 and self.environ.matrix[(i+1) * n + (j-1)] != 1:
+        if j > 0 and i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j-1):
             self.fringe.append((i+1, j-1))
-        if j > 0 and self.environ.matrix[i * n + (j-1)] != 1:
+        if j > 0 and self.environ.sensor_is_navigable(i, j-1):
             self.fringe.append((i, j-1))
-        if j > 0 and i > 0 and self.environ.matrix[(i-1) * n + (j-1)] != 1:
+        if j > 0 and i > 0 and self.environ.sensor_is_navigable(i-1, j-1):
             self.fringe.append((i-1, j-1))
-        if i > 0 and self.environ.matrix[(i-1) * n + j]:
+        if i > 0 and self.environ.sensor_is_navigable(i-1, j):
             self.fringe.append((i-1, j))
-        if i > 0 and j < self.environ.n - 1 and self.environ.matrix[(i-1) * n + (j+1)] != 1:
+        if i > 0 and j < self.environ.n - 1 and self.environ.sensor_is_navigable(i-1, j+1):
             self.fringe.append((i-1, j+1))
         
         return fringes
@@ -49,7 +49,7 @@ class Agent:
         """Returns the fringes in
             a priority - least cost first
         """
-        
+        fringes.sort(key=self.get_cost(fringe, fringes))
 
     def get_cost(self, source, dest):
         """Returns the path cost
