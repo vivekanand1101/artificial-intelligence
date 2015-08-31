@@ -24,13 +24,13 @@ class State:
 
 #    def __getitem__(self):
 #        return self.root
-
+'''
     def __hash__(self):
         return hash(tuple(self.root))
 
     def __eq__(self, other):
         return (self.__hash__(), self.n) == (other.__hash__(), other.n)
-
+'''
 class Graph():
     """Represents the state graph"""
 
@@ -74,7 +74,19 @@ class Graph():
         return n_
 
     def is_final(self, node):
-        if sorted(node.root[:-1]) == node.root[:-1]:
+        #print 'er'
+        x = []
+        for i in range(node.n * node.n - 1):
+            x.append(node.root[i])
+        #print 'x ', x
+        #print 'node.root ', node.root[:-1]
+        #[int(i) for i in x]
+        x = map(int, x)
+        #print 'x ', x
+        #print 'node.root ', node.root[:-1]
+        if sorted(x) == x:
+            #print sorted(node.root[:-1]) == node.root[:-1]
+            #print 'here'
             return True
         else:
             return False
@@ -94,12 +106,19 @@ class Graph():
         #to keep track that we
         #we don't loop forever
         visited = set()
+        count = 0
         while queue:
-
+            count += 1
             #dequeue from the queue
             node = queue.popleft()
+            
+            visited.add(node)
             if node.blank_pos() == (node.n - 1, node.n - 1) and self.is_final(node):
                 return node
+            
+            #if count == 4:
+             #   print node
+              #  break
 
             #do what you want to do with the node
             #but, first check if it is not visited
@@ -109,14 +128,18 @@ class Graph():
             #check for other nodes in the
             #neighbourhood
             n_ = self.neighbours(node)
+            #print n_
             for vertex in n_:
                 #print 'neighbours ', vertex
                 if vertex not in visited:
                     queue.append(vertex)
+            #print 'queue ', queue
 
+            #if count == 3:
+             #   break
             #you visited the node earlier!
-            visited.add(node)
-            print 'visited ', visited
+            #visited.add(node)
+            #print 'visited ', visited
 
 def main():
     t = int(raw_input())

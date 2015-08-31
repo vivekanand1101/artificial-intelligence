@@ -83,9 +83,13 @@ class Graph():
 
     def is_final(self, node, x, y):
         new = list(chain.from_iterable(node))
+        copy = []
+        for i in range(node.n * node.n -1):
+            copy.append(new[i])
+        copy = map(int, copy)
         index = x * 3 + y
-        new.pop(index)
-        if sorted(new) == new:
+        copy.pop(index)
+        if sorted(copy) == copy:
             return True
         else:
             return False
