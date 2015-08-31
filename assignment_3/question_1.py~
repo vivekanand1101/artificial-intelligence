@@ -8,7 +8,7 @@ class Environment:
         self.n = n
 
     def sensor_is_navigable(self, i, j):
-        if int(self.matrix[(i * self.n) + j]) == 0:
+        if self.matrix[i / n + i % n] == 0:
             return True
         else:
             return False
@@ -26,31 +26,30 @@ class Agent:
         """
         (i, j) = fringe
         fringes = []
-        #print self.environ.n, j, self.environ.sensor_is_navigable(i, j+1)
         if j < self.environ.n - 1 and self.environ.sensor_is_navigable(i, j+1): 
-            fringes.append((i, j+1))
+            self.fringe.append((i, j+1))
         if j < self.environ.n - 1 and i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j+1):
-            fringes.append((i+1, j+1))
+            self.fringe.append((i+1, j+1))
         if i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j):
-            fringes.append((i+1, j))
+            self.fringe.append((i+1, j))
         if j > 0 and i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j-1):
-            fringes.append((i+1, j-1))
+            self.fringe.append((i+1, j-1))
         if j > 0 and self.environ.sensor_is_navigable(i, j-1):
-            fringes.append((i, j-1))
+            self.fringe.append((i, j-1))
         if j > 0 and i > 0 and self.environ.sensor_is_navigable(i-1, j-1):
-            fringes.append((i-1, j-1))
+            self.fringe.append((i-1, j-1))
         if i > 0 and self.environ.sensor_is_navigable(i-1, j):
-            fringes.append((i-1, j))
+            self.fringe.append((i-1, j))
         if i > 0 and j < self.environ.n - 1 and self.environ.sensor_is_navigable(i-1, j+1):
-            fringes.append((i-1, j+1))
+            self.fringe.append((i-1, j+1))
+        
         return fringes
 
     def prioritize_new_fringes(self, fringe, fringes):
         """Returns the fringes in
             a priority - least cost first
         """
-        fringes.sort(key=lambda x: self.get_cost(fringe, x))
-        return fringes
+        fringes.sort(key=self.get_cost(fringe, fringes))
 
     def get_cost(self, source, dest):
         """Returns the path cost
@@ -58,42 +57,32 @@ class Agent:
         """
         (source_i, source_j) = source
         (dest_i, dest_j) = dest
-        if (abs(source_i - dest_i) == 1 and abs(source_j - dest_j) == 0) \
-            or (abs(source_j - dest_j) == 1 and abs(source_i - dest_i) == 0):
+        if ((source_i - dest_i) == 1 and (source_j - dest_j) == 0)
+            or ((source_j - dest_j) == 1 and (source_i - dest_i) == 0):
                 return 1.0
         else:
             return sqrt(2)
 
     def work(self):
-        queue = [(self.source_i, self.source_j)]
+        queue = [(source_i, source_j)]
         visited = []
         cost = 0
-        count = 0
 
         while queue:
             fringe = queue.pop(0)
-            count += 1
-            if count != 1:
-                #print 'queue ', queue
-                #print 'visited ', visited
-                print 'adding ', visited[-1], 'and ', fringe
-                cost += self.get_cost(visited[-1], fringe)
-                print 'cost2 ', cost
+            if cost:
+                cost += get_cost(visited[-1], fringe)
 
-            if fringe == (self.dest_i, self.dest_j):
-                print 're'
-                return cost
+            if fringe not in visited:
+                if fringe == (self.dest_i, self.dest_j):
+                    return cost
 
             fringes = self.new_fringes(fringe)
             prioritized_fringes = self.prioritize_new_fringes(fringe, fringes)
             for i in prioritized_fringes:
                 if i not in visited:
                     queue.append(i)
-            #if prioritized_fringes[0] not in visited:
-             #   queue.append(prioritized_fringes[0])
-            print 'queue ', queue
             visited.append(fringe)
-            print 'visited ', visited
 
 def main():
     x = raw_input()
@@ -104,10 +93,11 @@ def main():
     matrix = []
     for i in range(m):
         row = raw_input()
-        row = row.split(' ')
-        matrix.extend(row)
+        row.split(' ')
+        [int(i) for i in row]
+        matrix.append(row)
 
-    queries = int(raw_input())
+    queries = int(raw_input)
     aim = []
     for i in range(queries):
         x = raw_input()
@@ -116,8 +106,7 @@ def main():
         (dest_i, dest_j) = (int(x[2]), int(x[3]))
         aim.append([(source_i, source_j), (dest_i, dest_j)])
 
-    [int(i) for i in matrix]
-    e = Environment(matrix, m, n)
+    e = Environment(matrix)
     for i in range(queries):
         work = aim[i]
         agent = Agent(work, e)
