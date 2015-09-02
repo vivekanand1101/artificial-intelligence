@@ -8,7 +8,7 @@ class PriorityQueue:
         self.index = 0
 
     def push(self, item):
-        heapq.heappush(self.queue, (item.cost, self.index, item))
+        heapq.heappush(self.queue, (item.total_cost, self.index, item))
         self.index += 1
 
     def pop(self):
@@ -17,21 +17,26 @@ class PriorityQueue:
     def __repr__(self):
         return '%r' % self.queue
 
+    #def __iter__(self):
+     #   for x in self.queue:
+      #      yield x
+
 class Node:
     
     def __init__(self, i, j, cost):
         self.i = i
         self.j = j
         self.cost = cost
+        self.total_cost = cost
 
     def __repr__(self):
-        return '(%r, %r)' % (self.i, self.j)
-
+        return '%r cost: %r total cost: %r' % ((self.i, self.j), self.cost, self.total_cost)
 '''
     def __hash__(self):
         return hash((self.i, self.j))
+
     def __eq__(self, other):
-        return (self.i, self.j) == (other.i, other.j)
+        return self.i, self.j == other.i, other.j
 '''
 
 class Environment:
@@ -64,27 +69,36 @@ class Agent:
         #print self.environ.n, j, self.environ.sensor_is_navigable(i, j+1)
         if j < self.environ.n - 1 and self.environ.sensor_is_navigable(i, j+1):
             fringes.append(Node(i, j+1, fringe_cost+self.get_cost((i, j), (i, j+1))))
+            fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
         if j < self.environ.n - 1 and i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j+1):
-            fringes.append(Node(i+1, j+1, fringe_cost+self.get_cost((i, j), (i+1, j+1))))
+            fringes.append(Node(i+1, j+1, fringe_cost+self.get_cost((i, j), (i+1, j+1))))           
+            fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
         if i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j):
-            fringes.append(Node(i+1, j, fringe_cost+self.get_cost((i, j), (i+1, j))))
+            fringes.append(Node(i+1, j, fringe_cost+self.get_cost((i, j), (i+1, j))))            
+            fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
         if j > 0 and i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j-1):
             fringes.append(Node(i+1, j-1, fringe_cost+self.get_cost((i, j), (i+1, j-1))))
+            fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))       
         if j > 0 and self.environ.sensor_is_navigable(i, j-1):
             fringes.append(Node(i, j-1, fringe_cost+self.get_cost((i, j), (i, j-1))))
+            fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j)) 
         if j > 0 and i > 0 and self.environ.sensor_is_navigable(i-1, j-1):
             fringes.append(Node(i-1, j-1, fringe_cost+self.get_cost((i, j), (i-1, j-1))))
+            fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))       
         if i > 0 and self.environ.sensor_is_navigable(i-1, j):
             fringes.append(Node(i-1, j, fringe_cost+self.get_cost((i, j), (i-1, j))))
+            fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
         if i > 0 and j < self.environ.n - 1 and self.environ.sensor_is_navigable(i-1, j+1):
             fringes.append(Node(i-1, j+1, fringe_cost+self.get_cost((i, j), (i-1, j+1))))
+            fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
+#        print 'fringes ', fringes
         return fringes
 
     def prioritize_new_fringes(self, fringes):
         """Returns the fringes in
             a priority - least cost first
         """
-        fringes.sort(key=lambda x: x.cost)
+        fringes.sort(key=lambda x: x.total_cost)
         return fringes
 
     def get_cost(self, source, dest):
@@ -100,16 +114,18 @@ class Agent:
 
     def work(self):
         root = Node(self.source_i, self.source_j, 0)
+        #queue = [root]
         queue = PriorityQueue()
         queue.push(root)
-        visited = []
+        visited = set()
         #cost = 0
         count = 0
 
-        while queue:
+        while queue.queue != []:
+            #print queue.queue
             fringe = queue.pop()
             count += 1
-            #print count
+            print count
             #if count != 1:
                 #print 'queue ', queue
                 #print 'visited ', visited
@@ -122,14 +138,17 @@ class Agent:
                 return fringe.cost
 
             fringes = self.new_fringes(fringe)
-            for i in fringes:
-                if i not in visited and i not in queue.queue:
-                    queue.push(i)
-                    print queue
+            #prioritized_fringes = self.prioritize_new_fringes(fringes)
+            for x in fringes:
+#                print 'x: ', x, 'visited: ', visited
+#                print 'queue.queue ', queue.queue
+                if (x not in visited) and (x not in queue.queue):
+                    queue.push(x)
             #if prioritized_fringes[0] not in visited:
              #   queue.append(prioritized_fringes[0])
-            visited.append(fringe)
+            visited.add(fringe)
 #            print 'visited ', visited
+            #queue.sort(key=lambda i: i.cost)
 #            print 'queue ', queue
 
 def main():
