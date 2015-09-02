@@ -31,12 +31,12 @@ class Node:
 
     def __repr__(self):
         return '%r cost: %r total cost: %r' % ((self.i, self.j), self.cost, self.total_cost)
-    #def __hash__(self):
-     #   return hash((self.i, self.j))
+    
+   # def __hash__(self):
+    #    return hash('x'*(self.i + self.j)*abs(self.i - self.j))
 
     def __eq__(self, other):
         return (self.i, self.j) == (other.i, other.j)
-#'''
 
 class Environment:
 
@@ -45,11 +45,62 @@ class Environment:
         self.m = m
         self.n = n
 
-    def sensor_is_navigable(self, i, j):
-        if int(self.matrix[(i * self.n) + j]) == 0:
-            return True
+    def euclidean_dist(self, source, dest):
+        """Returns the path cost
+            arguments are tuples (i, j)
+        """
+        (source_i, source_j) = source
+        (dest_i, dest_j) = dest
+
+        i_diff = abs(source_i - dest_i)
+        j_diff = abs(source_j - dest_j)
+        
+        return sqrt(pow(i_diff, 2) + pow(j_diff, 2))
+
+    def sensor_is_navigable(self, present, next_):
+
+        (source_i, source_j) = present
+        (dest_i, dest_j) = next_
+
+        if self.euclidean_dist(present, next_) > 1.0:
+	    #up-right
+            if source_i - dest_i == 1 and dest_j - source_j == 1:
+                if int(self.matrix[(dest_i * self.n) + dest_j]) == 0 and \
+                        int(self.matrix[((dest_i + 1) * self.n) + dest_j]) == 0 and \
+                        int(self.matrix[((dest_i) * self.n) + dest_j - 1]) == 0:
+                            return True
+                else:
+                    return False
+	    #down-right
+            if dest_i - source_i == 1 and dest_j - source_j == 1:
+	        if int(self.matrix[(dest_i * self.n) + dest_j]) == 0 and \
+                    int(self.matrix[((dest_i - 1) * self.n) + dest_j]) == 0 and \
+                    int(self.matrix[((dest_i) * self.n) + dest_j - 1]) == 0:
+                        return True
+                else:
+                    return False
+	    #down-left
+            if dest_i - source_i == 1 and source_j - dest_j == 1:
+	        if int(self.matrix[(dest_i * self.n) + dest_j]) == 0 and \
+                    int(self.matrix[((dest_i - 1) * self.n) + dest_j]) == 0 and \
+                    int(self.matrix[((dest_i) * self.n) + dest_j + 1]) == 0:
+                        return True
+                else:
+                    return False
+	    #up-left
+            if source_i - dest_i == 1 and source_j - dest_j == 1:
+                if int(self.matrix[(dest_i * self.n) + dest_j]) == 0 and \
+                    int(self.matrix[((dest_i) * self.n) + dest_j + 1]) == 0 and \
+                        int(self.matrix[((dest_i + 1) * self.n) + dest_j]) == 0:
+                            return True
+                else:
+                    return False
         else:
-            return False
+            if int(self.matrix[(dest_i * self.n) + dest_j]) == 0:
+               # print 'reached ', dest_i, dest_j, 'from ', source_i, source_j
+                return True
+            else:
+                return False
 
 class Agent:
 
@@ -65,32 +116,33 @@ class Agent:
         (i, j) = (fringe.i, fringe.j)
         fringe_cost = fringe.cost
         fringes = []
-        #print self.environ.n, j, self.environ.sensor_is_navigable(i, j+1)
-        if j < self.environ.n - 1 and self.environ.sensor_is_navigable(i, j+1):
+        #print self.environ.n, j, self.environ.sensor_is_navigable((i, j), (i, j+1)
+        if j < self.environ.n - 1 and self.environ.sensor_is_navigable((i, j), (i, j+1)):
             fringes.append(Node(i, j+1, fringe_cost+self.get_cost((i, j), (i, j+1))))
             fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
-        if j < self.environ.n - 1 and i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j+1):
+        if j < self.environ.n - 1 and i < self.environ.m - 1 and self.environ.sensor_is_navigable((i, j), (i+1, j+1)):
             fringes.append(Node(i+1, j+1, fringe_cost+self.get_cost((i, j), (i+1, j+1))))           
             fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
-        if i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j):
+        if i < self.environ.m - 1 and self.environ.sensor_is_navigable((i, j), (i+1, j)):
+            #print 'came here ', i+1, j
             fringes.append(Node(i+1, j, fringe_cost+self.get_cost((i, j), (i+1, j))))            
             fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
-        if j > 0 and i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j-1):
+        if j > 0 and i < self.environ.m - 1 and self.environ.sensor_is_navigable((i, j), (i+1, j-1)):
             fringes.append(Node(i+1, j-1, fringe_cost+self.get_cost((i, j), (i+1, j-1))))
             fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))       
-        if j > 0 and self.environ.sensor_is_navigable(i, j-1):
+        if j > 0 and self.environ.sensor_is_navigable((i, j), (i, j-1)):
             fringes.append(Node(i, j-1, fringe_cost+self.get_cost((i, j), (i, j-1))))
             fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j)) 
-        if j > 0 and i > 0 and self.environ.sensor_is_navigable(i-1, j-1):
+        if j > 0 and i > 0 and self.environ.sensor_is_navigable((i, j), (i-1, j-1)):
             fringes.append(Node(i-1, j-1, fringe_cost+self.get_cost((i, j), (i-1, j-1))))
             fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))       
-        if i > 0 and self.environ.sensor_is_navigable(i-1, j):
+        if i > 0 and self.environ.sensor_is_navigable((i, j), (i-1, j)):
             fringes.append(Node(i-1, j, fringe_cost+self.get_cost((i, j), (i-1, j))))
             fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
-        if i > 0 and j < self.environ.n - 1 and self.environ.sensor_is_navigable(i-1, j+1):
+        if i > 0 and j < self.environ.n - 1 and self.environ.sensor_is_navigable((i, j), (i-1, j+1)):
             fringes.append(Node(i-1, j+1, fringe_cost+self.get_cost((i, j), (i-1, j+1))))
             fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
-#        print 'fringes ', fringes
+        #print 'fringes ', fringes
         return fringes
 
     def prioritize_new_fringes(self, fringes):
@@ -122,7 +174,7 @@ class Agent:
         while queue.queue != []:
             fringe = queue.pop()
             #print 'type ', type(fringe.i)
-            #print 'fringe before ', fringe
+            #print 'fringe ', fringe
             #fringe = fringe[-1]
             #print 'fringe after', fringe
             count += 1
@@ -161,6 +213,9 @@ class Agent:
             visited.append(fringe)
             #print 'visited ', visited
             #print 'queue ', queue
+        print 'Not possible'
+        exit(1)
+
 
 def main():
     x = raw_input()

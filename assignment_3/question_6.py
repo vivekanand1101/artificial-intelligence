@@ -1,3 +1,4 @@
+from itertools import permutations
 from math import sqrt
 import heapq
 
@@ -8,7 +9,7 @@ class PriorityQueue:
         self.index = 0
 
     def push(self, item):
-        heapq.heappush(self.queue, (item.cost, item))
+        heapq.heappush(self.queue, (item.total_cost, item))
         self.index += 1
 
     def pop(self):
@@ -18,11 +19,8 @@ class PriorityQueue:
         return '%r' % self.queue
 
     #def __iter__(self):
-     #   for i in self.queue:
-      #      yield i[1]
-
-    #def __hash__(self):
-     #   return hash(self.queue)
+     #   for x in self.queue:
+      #      yield x
 
 class Node:
     
@@ -30,13 +28,16 @@ class Node:
         self.i = i
         self.j = j
         self.cost = cost
+        self.total_cost = cost
 
     def __repr__(self):
-        return '(%r, %r)' % (self.i, self.j)
+        return '%r cost: %r total cost: %r' % ((self.i, self.j), self.cost, self.total_cost)
     #def __hash__(self):
      #   return hash((self.i, self.j))
+
     def __eq__(self, other):
         return (self.i, self.j) == (other.i, other.j)
+#'''
 
 class Environment:
 
@@ -68,27 +69,36 @@ class Agent:
         #print self.environ.n, j, self.environ.sensor_is_navigable(i, j+1)
         if j < self.environ.n - 1 and self.environ.sensor_is_navigable(i, j+1):
             fringes.append(Node(i, j+1, fringe_cost+self.get_cost((i, j), (i, j+1))))
+            fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
         if j < self.environ.n - 1 and i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j+1):
-            fringes.append(Node(i+1, j+1, fringe_cost+self.get_cost((i, j), (i+1, j+1))))
+            fringes.append(Node(i+1, j+1, fringe_cost+self.get_cost((i, j), (i+1, j+1))))           
+            fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
         if i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j):
-            fringes.append(Node(i+1, j, fringe_cost+self.get_cost((i, j), (i+1, j))))
+            fringes.append(Node(i+1, j, fringe_cost+self.get_cost((i, j), (i+1, j))))            
+            fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
         if j > 0 and i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j-1):
             fringes.append(Node(i+1, j-1, fringe_cost+self.get_cost((i, j), (i+1, j-1))))
+            fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))       
         if j > 0 and self.environ.sensor_is_navigable(i, j-1):
             fringes.append(Node(i, j-1, fringe_cost+self.get_cost((i, j), (i, j-1))))
+            fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j)) 
         if j > 0 and i > 0 and self.environ.sensor_is_navigable(i-1, j-1):
             fringes.append(Node(i-1, j-1, fringe_cost+self.get_cost((i, j), (i-1, j-1))))
+            fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))       
         if i > 0 and self.environ.sensor_is_navigable(i-1, j):
             fringes.append(Node(i-1, j, fringe_cost+self.get_cost((i, j), (i-1, j))))
+            fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
         if i > 0 and j < self.environ.n - 1 and self.environ.sensor_is_navigable(i-1, j+1):
             fringes.append(Node(i-1, j+1, fringe_cost+self.get_cost((i, j), (i-1, j+1))))
+            fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
+#        print 'fringes ', fringes
         return fringes
 
     def prioritize_new_fringes(self, fringes):
         """Returns the fringes in
             a priority - least cost first
         """
-        fringes.sort(key=lambda x: x.cost)
+        fringes.sort(key=lambda x: x.total_cost)
         return fringes
 
     def get_cost(self, source, dest):
@@ -151,7 +161,7 @@ class Agent:
              #   queue.append(prioritized_fringes[0])
             visited.append(fringe)
             #print 'visited ', visited
-            print 'queue ', queue
+            #print 'queue ', queue
 
 def main():
     x = raw_input()
@@ -171,15 +181,32 @@ def main():
         x = raw_input()
         x = x.split(' ')
         (source_i, source_j) = (int(x[0]), int(x[1]))
-        (dest_i, dest_j) = (int(x[2]), int(x[3]))
-        aim.append([(source_i, source_j), (dest_i, dest_j)])
+        #(dest_i, dest_j) = (int(x[2]), int(x[3]))
+        aim.append(((source_i, source_j)))
 
     [int(i) for i in matrix]
     e = Environment(matrix, m, n)
+    d = {'0': (0, 0), '1': (0, n-1), '2': (m-1, n-1), '3': (m-1, 0)}
     for i in range(queries):
-        work = aim[i]
-        agent = Agent(work, e)
-        cost = agent.work()
-        print int(cost + 0.5)
+        min_cost = 1000000000
+        nasty_l = list(permutations(['0', '1', '2', '3']))
+        for j in nasty_l:
+            cost = 0
+            #print 'order ', j
+            for k in range(len(j)):
+                if k == 0:
+                    work = (aim[i], d[j[k]])
+                    #print 'work ', work
+                    agent = Agent(work, e)
+                    cost += agent.work()
+                else:
+                    work = (d[j[k-1]], d[j[k]])
+                    agent = Agent(work, e)
+                    cost += agent.work()
+            #print 'cost ', cost
+            if cost < min_cost:
+                min_cost = cost
+
+        print int(min_cost + 0.5)
 
 main()
