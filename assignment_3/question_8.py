@@ -30,7 +30,7 @@ class Node:
         #self.total_cost = cost
 
     def __repr__(self):
-        return '(%r, %r)' % tuple([self.i, self.j])
+        return '(%r, %r) cost: %r' % tuple([self.i, self.j, self.cost])
 
     def __hash__(self):
         return hash((self.i, self.j, self.cost))
@@ -70,26 +70,26 @@ class Agent:
         if j < self.environ.n - 1 and self.environ.sensor_is_navigable(i, j+1):
             fringes.append(Node(i, j+1, fringe_cost+self.get_cost((i, j), (i, j+1))))
             #fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
-        #if j < self.environ.n - 1 and i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j+1):
-         #   fringes.append(Node(i+1, j+1, fringe_cost+self.get_cost((i, j), (i+1, j+1))))           
+        if j < self.environ.n - 1 and i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j+1):
+            fringes.append(Node(i+1, j+1, fringe_cost+self.get_cost((i, j), (i+1, j+1))))           
             #fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
         if i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j):
             fringes.append(Node(i+1, j, fringe_cost+self.get_cost((i, j), (i+1, j))))            
             #fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
-        #if j > 0 and i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j-1):
-         #   fringes.append(Node(i+1, j-1, fringe_cost+self.get_cost((i, j), (i+1, j-1))))
+        if j > 0 and i < self.environ.m - 1 and self.environ.sensor_is_navigable(i+1, j-1):
+            fringes.append(Node(i+1, j-1, fringe_cost+self.get_cost((i, j), (i+1, j-1))))
             #fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))       
         if j > 0 and self.environ.sensor_is_navigable(i, j-1):
             fringes.append(Node(i, j-1, fringe_cost+self.get_cost((i, j), (i, j-1))))
             #fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j)) 
-        #if j > 0 and i > 0 and self.environ.sensor_is_navigable(i-1, j-1):
-         #   fringes.append(Node(i-1, j-1, fringe_cost+self.get_cost((i, j), (i-1, j-1))))
+        if j > 0 and i > 0 and self.environ.sensor_is_navigable(i-1, j-1):
+            fringes.append(Node(i-1, j-1, fringe_cost+self.get_cost((i, j), (i-1, j-1))))
             #fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))       
         if i > 0 and self.environ.sensor_is_navigable(i-1, j):
             fringes.append(Node(i-1, j, fringe_cost+self.get_cost((i, j), (i-1, j))))
             #fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
-        #if i > 0 and j < self.environ.n - 1 and self.environ.sensor_is_navigable(i-1, j+1):
-         #   fringes.append(Node(i-1, j+1, fringe_cost+self.get_cost((i, j), (i-1, j+1))))
+        if i > 0 and j < self.environ.n - 1 and self.environ.sensor_is_navigable(i-1, j+1):
+            fringes.append(Node(i-1, j+1, fringe_cost+self.get_cost((i, j), (i-1, j+1))))
             #fringes[-1].total_cost += self.get_cost((fringes[-1].i, fringes[-1].j), (self.dest_i, self.dest_j))
 #        print 'fringes ', fringes
         return fringes
@@ -111,6 +111,7 @@ class Agent:
         i_diff = abs(source_i - dest_i)
         j_diff = abs(source_j - dest_j)
         return sqrt(pow(i_diff, 2) + pow(j_diff, 2))
+        #return 1.0
 
     def work(self):
         root1 = Node(self.source_i, self.source_j, 0)
@@ -124,29 +125,21 @@ class Agent:
         #cost = 0
         count = 0
 
-        while queue1 and queue2:
+        while queue1.queue and queue2.queue:
             fringe1 = queue1.pop()
             fringe2 = queue2.pop()
-            #print 'type ', type(fringe.i)
+            #visited1.append(fringe1)
+            #fringe2 = queue2.pop()
             #print 'fringe1 ', fringe1
             #print 'fringe2 ', fringe2
-            #fringe = fringe[-1]
-            #print 'fringe after', fringe
             count += 1
             #print count
-            #if count != 1:
-                #print 'queue ', queue
-                #print 'visited ', visited
-                #print 'adding ', visited[-1], 'and ', fringe
-                #cost += self.get_cost(visited[-1], fringe)
-                #print 'cost2 ', cost
-
-            #print 'fringe ', fringe
 
             if fringe1 in visited2:
                 for i in range(len(visited2)):
                     if fringe1 == visited2[i]:
                         return (fringe1.cost, visited2[i].cost)
+
             if fringe2 in visited1:
                 for i in range(len(visited1)):
                     if fringe2 == visited1[i]:
@@ -154,6 +147,17 @@ class Agent:
 
             fringes1 = self.new_fringes(fringe1)
             fringes2 = self.new_fringes(fringe2)
+            if fringe1 in fringes2:
+                #print 'came here'
+                for i in range(len(fringes2)):
+                    if fringe1 == fringes2[i]:
+                        return (fringe1.cost, fringes2[i].cost)
+
+            if fringe2 in fringes1:
+                for i in range(len(fringes1)):
+                    if fringe2 == fringes1[i]:
+                        return (fringe2.cost, fringes1[i].cost)
+
             for i in fringes1:
                 flag = 0
                 if i not in visited1:
@@ -179,6 +183,13 @@ class Agent:
             visited1.append(fringe1)
             #print 'visited1 ', visited1
             #print 'queue ', queue
+            #visited2.append(fringe2)
+            #print 'fringe2 ', fringe2
+            #if fringe2 in visited1:
+             #   for i in range(len(visited1)):
+              #      if fringe2 == visited1[i]:
+               #         return (fringe2.cost, visited1[i].cost)
+            #fringes2 = self.new_fringes(fringe2)
             for i in fringes2:
                 flag = 0
                 if i not in visited2:
@@ -233,6 +244,6 @@ def main():
         work = aim[i]
         agent = Agent(work, e)
         (cost1, cost2) = agent.work()
-        print int(int(cost1) + int(cost2) + 0.5)
+        print int(cost1 + cost2 + 0.5)
 
 main()
