@@ -27,9 +27,10 @@ def same_col_count(n, matrix, player):
 def forward_diagonal_count(n, matrix, player):
     count = 0
     for i in range(n):
-        if (str(matrix[(n - 1) * i]) != str(player)) and (str(matrix[(n - 1) * i]) != '*'):
+        if (str(matrix[(n - 1) * (i + 1)]) != str(player)) and (str(matrix[(n - 1) * (i + 1)]) != '*'):
+            #print 'player %s index %s ' % (player, (n - 1) * (i + 1))
             return float("inf")
-        if (str(matrix[(n - 1) * i]) == '*'):
+        if (str(matrix[(n - 1) * (i + 1)]) == '*'):
             count += 1
     return count
 
@@ -65,6 +66,8 @@ def calculate_min_steps(n, matrix):
     min_moves_for_player_2_to_win = min_moves_for_a_player_to_win(n, matrix, '2')
     if (min_moves_for_player_1_to_win, min_moves_for_player_2_to_win) == (float('inf'), float('inf')):
         return matrix.count('*')
+    elif min_moves_for_player_1_to_win == 0 or min_moves_for_player_2_to_win == 0:
+        return 0
     diff1 = min_moves_for_player_1_to_win - min_moves_for_player_2_to_win
     diff2 = min_moves_for_player_2_to_win - min_moves_for_player_1_to_win
 
